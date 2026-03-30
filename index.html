@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Line - Performance Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        :root { --primary: #1a2a3a; --gold: #D4AF37; --bg: #f8fafc; }
+        body { background-color: var(--bg); font-family: 'Inter', sans-serif; }
+        .bg-primary { background-color: var(--primary); }
+        .active-tab { background-color: #334155; border-left: 4px solid var(--gold); color: white !important; font-weight: 800; }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .loading-overlay { background: rgba(255,255,255,0.8); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-gray-800">
+
+    <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center loading-overlay hidden">
+        <div class="text-center">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-blue-600 mb-4"></i>
+            <p class="font-bold text-gray-600 uppercase text-xs tracking-widest">Sincronizando...</p>
+        </div>
+    </div>
+
+    <aside class="w-64 bg-primary text-white flex flex-col shrink-0 shadow-2xl">
+        <div class="p-6 text-xl font-black border-b border-slate-700 flex items-center tracking-tighter">
+            <div class="w-8 h-8 bg-yellow-500 rounded mr-3 flex items-center justify-center text-primary italic shadow-lg">V</div>
+            VISION LINE ADMIN
+        </div>
+        <nav class="flex-1 p-4 space-y-2 text-sm mt-4">
+            <button onclick="showTab('geral')" id="btn-geral" class="w-full flex items-center py-3 px-4 rounded text-gray-400 hover:bg-slate-800 transition-all active-tab">
+                <i class="fas fa-chart-line w-5"></i> Visão Geral
+            </button>
+            <button onclick="showTab('ranking')" id="btn-ranking" class="w-full flex items-center py-3 px-4 rounded text-gray-400 hover:bg-slate-800 transition-all">
+                <i class="fas fa-trophy w-5"></i> Performance Consultor
+            </button>
+            <button onclick="showTab('produtos')" id="btn-produtos" class="w-full flex items-center py-3 px-4 rounded text-gray-400 hover:bg-slate-800 transition-all">
+                <i class="fas fa-box-open w-5"></i> Mix de Produtos
+            </button>
+        </nav>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto relative">
+        <header class="bg-white border-b p-4 flex justify-between items-center px-8 sticky top-0 z-40">
+            <h2 id="tab-title" class="text-xl font-extrabold text-gray-800 uppercase italic">Visão Geral</h2>
+            <button onclick="fetchAdminData()" class="bg-blue-600 text-white px-6 py-2 rounded-full text-xs font-black shadow-lg hover:scale-105 transition-all">
+                <i class="fas fa-sync-alt mr-2"></i> ATUALIZAR
+            </button>
+        </header>
+
+        <div class="p-8 max-w-7xl mx-auto space-y-8">
+            
+            <div id="tab-geral" class="tab-content space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-2xl card-shadow border-b-4 border-blue-500">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">Faturamento Rede</p>
+                        <p class="text-2xl font-black" id="cardFaturamento">R$ 0,00</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl card-shadow border-b-4 border-yellow-500">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">Pontos Totais</p>
+                        <p class="text-2xl font-black" id="cardPontos">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl card-shadow border-b-4 border-green-500">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">Itens Mix</p>
+                        <p class="text-2xl font-black" id="cardMixTotal">0</p>
+                    </div>
+                    <div class="bg-red-600 p-6 rounded-2xl card-shadow text-white">
+                        <p class="text-[10px] text-red-200 font-bold uppercase">Perdas (F-G)</p>
+                        <p class="text-2xl font-black" id="cardPerdas">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl card-shadow overflow-hidden">
+                    <div class="p-5 border-b bg-gray-50/50 font-black text-gray-700 text-xs uppercase tracking-widest">Performance por Unidade</div>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-white text-gray-400 text-[10px] uppercase font-black border-b">
+                            <tr><th class="p-5">Unidade</th><th class="p-5 text-center">Atendidos</th><th class="p-5 text-center text-red-500 bg-red-50/30">Perdas</th><th class="p-5 text-right italic">Faturamento</th></tr>
+                        </thead>
+                        <tbody id="tbody-lojas" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-ranking" class="tab-content hidden space-y-8">
+                <div class="bg-white rounded-3xl card-shadow overflow-hidden">
+                    <div class="p-5 border-b bg-gray-50/50 font-black text-gray-700 text-xs uppercase tracking-widest italic">Ranking Geral de Consultores</div>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-white text-gray-400 text-[10px] uppercase font-black border-b">
+                            <tr>
+                                <th class="p-5">Consultor</th>
+                                <th class="p-5 text-center">Atendimentos</th>
+                                <th class="p-5 text-center text-red-500 bg-red-50/30">Perdas</th>
+                                <th class="p-5 text-center">Pontos</th>
+                                <th class="p-5 text-right">Faturamento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-consultores" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-produtos" class="tab-content hidden space-y-8">
+                <div class="bg-white rounded-3xl card-shadow overflow-hidden border border-yellow-100">
+                    <div class="p-5 border-b bg-yellow-50/50 font-black text-gray-700 text-xs uppercase tracking-widest">Mix Detalhado (Colunas I a M)</div>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-500 text-[10px] uppercase font-black border-b">
+                            <tr><th class="p-5">Consultor</th><th class="p-5 text-center">Grau</th><th class="p-5 text-center">Solar</th><th class="p-5 text-center">Kit</th><th class="p-5 text-center">Grife</th><th class="p-5 text-center">Seguro</th><th class="p-5 text-center bg-gray-200 text-gray-800">Total</th></tr>
+                        </thead>
+                        <tbody id="tbody-produtos" class="divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxOBszumx0-dxL1VjgQJNlslxaCyMyvCUn8EWjargQqGwx0xzjT-q99njIM2ST1xLdWdg/exec';
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            document.getElementById('btn-' + tab).classList.add('active-tab');
+            const titles = { 'geral': 'Visão Geral', 'ranking': 'Performance Consultor', 'produtos': 'Mix de Produtos' };
+            document.getElementById('tab-title').innerText = titles[tab];
+        }
+
+        async function fetchAdminData() {
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                const response = await fetch(`${API_URL}?action=admin`);
+                const data = await response.json();
+                render(data);
+            } catch (e) { alert("Erro ao carregar dados."); }
+            finally { document.getElementById('loader').classList.add('hidden'); }
+        }
+
+        function render(data) {
+            document.getElementById('cardFaturamento').innerText = `R$ ${data.totalVendas.toLocaleString('pt-BR')}`;
+            document.getElementById('cardPontos').innerText = data.totalPontos.toLocaleString('pt-BR');
+            document.getElementById('cardPerdas').innerText = data.totalPerdaQtd;
+            const mixTotal = data.produtosGeral.grau + data.produtosGeral.solar + data.produtosGeral.kit + data.produtosGeral.grife + data.produtosGeral.seguro;
+            document.getElementById('cardMixTotal').innerText = mixTotal;
+
+            // LOJAS
+            document.getElementById('tbody-lojas').innerHTML = data.rankingLojas.map(l => `
+                <tr class="hover:bg-blue-50/50">
+                    <td class="p-5 font-black text-gray-700">${l.unidade}</td>
+                    <td class="p-5 text-center font-bold text-gray-400">${l.atendidos}</td>
+                    <td class="p-5 text-center font-black text-red-600 bg-red-50/30">${l.perdaQtd}</td>
+                    <td class="p-5 text-right font-black italic">R$ ${l.vendas.toLocaleString('pt-BR')}</td>
+                </tr>`).join('');
+
+            // CONSULTOR (NOVO!)
+            document.getElementById('tbody-consultores').innerHTML = data.rankingConsultores.map(c => `
+                <tr class="hover:bg-gray-50 transition-all">
+                    <td class="p-5 font-black text-gray-700">${c.nome} <br><small class="text-gray-400 font-normal uppercase">${c.unidade}</small></td>
+                    <td class="p-5 text-center font-bold">${c.atendidos}</td>
+                    <td class="p-5 text-center font-black text-red-600 bg-red-50/30 italic">${c.perdaQtd}</td>
+                    <td class="p-5 text-center"><span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-black text-xs">${c.pontos}</span></td>
+                    <td class="p-5 text-right font-bold">R$ ${c.vendas.toLocaleString('pt-BR')}</td>
+                </tr>`).join('');
+
+            // MIX PRODUTOS
+            document.getElementById('tbody-produtos').innerHTML = data.rankingConsultores.map(c => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-5 font-black text-gray-700 border-r">${c.nome}</td>
+                    <td class="p-5 text-center font-bold text-blue-600">${c.produtos.grau}</td>
+                    <td class="p-5 text-center font-bold text-orange-600">${c.produtos.solar}</td>
+                    <td class="p-5 text-center font-bold text-green-600">${c.produtos.kit}</td>
+                    <td class="p-5 text-center font-bold text-purple-600">${c.produtos.grife}</td>
+                    <td class="p-5 text-center font-bold text-red-600">${c.produtos.seguro}</td>
+                    <td class="p-5 text-center bg-gray-100 font-black">${c.produtos.grau + c.produtos.solar + c.produtos.kit + c.produtos.grife + c.produtos.seguro}</td>
+                </tr>`).join('');
+        }
+        document.addEventListener('DOMContentLoaded', fetchAdminData);
+    </script>
+</body>
+</html>
