@@ -143,9 +143,8 @@
             document.getElementById('cardFaturamento').innerText = `R$ ${data.totalVendas.toLocaleString('pt-BR')}`;
             document.getElementById('cardPontos').innerText = data.totalPontos.toLocaleString('pt-BR');
             document.getElementById('cardPerdas').innerText = data.totalPerdaQtd;
-            const mixTotal = data.produtosGeral.grau + data.produtosGeral.solar + data.produtosGeral.kit + data.produtosGeral.grife + data.produtosGeral.seguro;
-            document.getElementById('cardMixTotal').innerText = mixTotal;
-
+            // Localize essa linha no seu HTML e atualize:
+const mixTotal = data.produtosGeral.grau + data.produtosGeral.solar + data.produtosGeral.kit + data.produtosGeral.grife + data.produtosGeral.seguro + (data.produtosGeral.marcapropria || 0);
             // LOJAS
             document.getElementById('tbody-lojas').innerHTML = data.rankingLojas.map(l => `
                 <tr class="hover:bg-blue-50/50">
